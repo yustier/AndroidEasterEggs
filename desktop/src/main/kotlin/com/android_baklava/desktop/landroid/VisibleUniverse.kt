@@ -1,4 +1,9 @@
 /*
+ * (c) MMXXV Airoku / Claude Sonnet 4.5 All rights reserved for modified part.
+ * Modifications:
+ * - Removed Android-specific dependencies (android.util.Log)
+ * - Replaced Log.v() with println() for debugging
+ *
  * Copyright (C) 2023 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

@@ -5,49 +5,6 @@
 Android 16の「Landroid」スクリーンセーバーをWindows/Linux/macOSで動作するデスクトップアプリケーションに移植したプロジェクトです。
 Compose Multiplatformを使用し、通常のゲームモードとスクリーンセーバーモードの両方に対応しています。
 
-## 完成した機能
-
-### 基本機能
-- ✅ デスクトップモジュールの作成とビルド設定
-- ✅ Compose Multiplatform 1.7.1の設定
-- ✅ すべての必要なKotlinソースファイルの移植（14+ファイル）
-- ✅ Android依存関係の完全な除去
-- ✅ コンパイル成功（警告のみ）
-
-### 移植したファイル
-- ✅ Vec2.kt - 2Dベクトル演算
-- ✅ Colors.kt - カラー定義
-- ✅ Maths.kt - 数学ユーティリティ
-- ✅ Physics.kt - 物理シミュレーション
-- ✅ Randomness.kt - ランダムユーティリティ（Bag, RandomTable）
-- ✅ Namer.kt - 惑星/星の命名システム
-- ✅ Universe.kt - 宇宙シミュレーション
-- ✅ VisibleUniverse.kt - 描画機能
-- ✅ ComposeTools.kt - Compose拡張
-- ✅ Autopilot.kt - 自動操縦システム
-- ✅ PathTools.kt - SVGパス解析
-- ✅ DesktopUI.kt - UIコンポーネント
-
-### ゲーム機能
-- ✅ フルスクリーンモード対応
-- ✅ F11キーでフルスクリーン切り替え
-- ✅ Escキーで終了
-- ✅ マウス/タッチ操作による宇宙船制御
-- ✅ オートパイロットモード
-- ✅ 惑星探索とランディング
-- ✅ リアルタイム物理シミュレーション
-
-### スクリーンセーバー機能
-- ✅ コマンドライン引数対応（`/s`, `/c`, `--help`）
-- ✅ スクリーンセーバーモード（自動フルスクリーン + オートパイロット）
-- ✅ マウス/キーボード入力による自動終了
-- ✅ 設定ダイアログ表示
-
-### パッケージング
-- ✅ Windows .exeファイル生成成功
-- ✅ インストーラー形式で配布
-- ✅ JVMランタイム埋め込み（ポータブル動作）
-
 ## 使用方法
 
 ### ビルドと実行
@@ -67,8 +24,8 @@ cd desktop
 # スクリーンセーバーモードでテスト
 .\gradlew.bat run --args="/s"
 
-# ヘルプ表示
-.\gradlew.bat run --args="--help"
+# 設定/使い方ダイアログ表示
+.\gradlew.bat run --args="/c"
 
 # ポータブル版の生成（推奨）- フォルダ形式
 .\gradlew.bat createDistributable
@@ -81,11 +38,11 @@ cd desktop
 ```
 
 生成されたファイルは以下に配置されます：
-- **ポータブル版（ZIP）**: `build\compose\binaries\main\app\Landroid\`
+- **ポータブル版**: `build\compose\binaries\main\app\Landroid\`
   - このフォルダをそのままコピーして使用可能
   - `Landroid.exe`を実行（JVMランタイム埋め込み済み）
-- **インストーラー版(.exe)**: `build\compose\binaries\main\exe\Landroid-1.0.0.exe`
-- **インストーラー版(.msi)**: `build\compose\binaries\main\msi\Landroid-1.0.0.msi`
+- **インストーラー版(.exe)**: `build\compose\binaries\main\exe\Landroid-1.1.1.exe`
+- **インストーラー版(.msi)**: `build\compose\binaries\main\msi\Landroid-1.1.1.msi`
 
 ### コマンドライン引数
 
@@ -96,12 +53,11 @@ Landroid.exe
 # スクリーンセーバーモード（フルスクリーン + オートパイロット）
 Landroid.exe /s
 
-# 設定ダイアログ表示
+# 設定/使い方ダイアログ表示（日本語）
 Landroid.exe /c
-
-# ヘルプメッセージ表示
-Landroid.exe --help
 ```
+
+**注意:** `/c`ダイアログには、起動方法、操作方法、スクリーンセーバーモードの説明が日本語で表示されます。
 
 ### キーボード操作
 
@@ -112,7 +68,10 @@ Landroid.exe --help
 - マウス操作 - 宇宙船の制御
 
 **スクリーンセーバーモード:**
-- 任意のキー/マウス移動 - 終了（標準的なスクリーンセーバー動作）
+- マウスポインタ - 自動的に非表示
+- マウス移動 - 終了（1.5秒後から検知開始）
+- 任意のキー - 即座に終了
+- マルチモニター - 全画面黒塗り対応
 
 ## スクリーンセーバー(.scr)への変換
 
@@ -176,25 +135,43 @@ desktop/
         └── VisibleUniverse.kt
 ```
 
+## バージョン履歴
+
+### v1.1.1 (2025-11-01)
+- ✨ スクリーンセーバーモードでマウスポインタを自動非表示
+- 🗑️ `--help`オプションを削除（`/c`に統合）
+- 🌐 `/c`ダイアログを日本語化し、詳細な使い方を表示
+- 📝 プロポーショナルフォントでも見やすいダイアログデザイン
+
+### v1.1.0 (2025-11-01)
+- ✨ Android 16公式ロゴをアイコンとして追加
+- 🐛 フルスクリーン切り替え時のウィンドウサイズ保持を修正
+- 🐛 スクリーンセーバー起動時の即座終了問題を修正（1.5秒安定化期間）
+- ✨ マルチモニター対応（全画面黒塗り）
+- ✨ マウス移動検知の改善
+
+### v1.0.0 (2025-11-01)
+- 🎉 Android 16 LandroidのデスクトップPCへの移植完了
+- ✨ 通常ゲームモードとスクリーンセーバーモード対応
+- 📦 ポータブル版とインストーラー版の配布
+
 ## 既知の問題
 
 - ⚠️ `forEachGesture()`の非推奨警告（機能には影響なし）
-- 今後`awaitEachGesture()`への移行を推奨
+- ⚠️ スクリーンセーバーモードでのマウスクリック検知は動作しない（オートパイロットのため）
+  - マウス移動検知で十分に機能するため、実用上の問題なし
 
 ## 今後の改善案
 
-1. アイコンファイルの追加（現在コメントアウト済み）
-2. プレビューモード(`/p`)の実装
-3. より詳細な設定ダイアログ
-4. マルチモニター対応の改善
-5. 非推奨APIの更新
+1. プレビューモード(`/p`)の実装
+2. 非推奨APIの更新（`awaitEachGesture()`への移行）
+3. 英語版ダイアログの追加オプション
 
 ## ライセンス
 
-元のAndroid Easter Eggsプロジェクトのライセンスに準拠します。
+(c) MMXXV Airoku / Claude Sonnet 4.5 All rights reserved for modified part.
 
-## クレジット
-
-- 元コード: Android Open Source Project
-- デスクトップ移植: このプロジェクト
-
+This software includes code licensed under the Apache License 2.0.
+This software includes modified portions of code originally licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+Copyright (C) 2024 The Android Open Source Project

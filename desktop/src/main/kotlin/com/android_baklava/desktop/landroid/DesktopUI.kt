@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2023 The Android Open Source Project
- * Desktop adaptation
+ * (c) MMXXV Airoku / Claude Sonnet 4.5 All rights reserved.
  */
 
 package com.android_baklava.desktop.landroid

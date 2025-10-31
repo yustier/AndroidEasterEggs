@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.android_baklava.desktop"
-version = "1.1.0"
+version = "1.1.1"
 
 repositories {
     google()
@@ -39,9 +39,13 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb, TargetFormat.Exe)
             packageName = "Landroid"
-            packageVersion = "1.1.0"
+            packageVersion = project.version.toString()
             description = "Android 16 Baklava Easter Egg - Landroid Space Explorer"
             vendor = "Android Easter Eggs"
+            licenseFile.set(project.file("LICENSE"))
+            
+            // Include LICENSE and README in the distribution
+            appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
             
             // Include all resources in the app directory
             includeAllModules = true
@@ -61,4 +65,29 @@ compose.desktop {
 
 kotlin {
     jvmToolchain(21)
+}
+
+// Copy LICENSE and README to distribution after build
+tasks.register("copyLicenseFiles") {
+    doLast {
+        val distDir = file("build/compose/binaries/main/app/Landroid")
+        if (distDir.exists()) {
+            copy {
+                from("LICENSE")
+                into(distDir)
+            }
+            copy {
+                from("README.md")
+                into(distDir)
+            }
+            println("Copied LICENSE and README.md to $distDir")
+        }
+    }
+}
+
+// Run after createDistributable
+tasks.whenTaskAdded {
+    if (name == "createDistributable") {
+        finalizedBy("copyLicenseFiles")
+    }
 }

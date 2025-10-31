@@ -1,3 +1,7 @@
+/*
+ * (c) MMXXV Airoku / Claude Sonnet 4.5 All rights reserved.
+ */
+
 package com.android_baklava.desktop
 
 import androidx.compose.foundation.background
@@ -12,6 +16,10 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.android_baklava.desktop.landroid.*
+import java.awt.Cursor
+import java.awt.Point
+import java.awt.Toolkit
+import java.awt.image.BufferedImage
 import javax.swing.JOptionPane
 import kotlin.math.sqrt
 
@@ -29,6 +37,16 @@ data class AppConfig(
     val exitOnAnyInput: Boolean = false
 )
 
+// Create an invisible cursor for screensaver mode
+fun createInvisibleCursor(): Cursor {
+    val cursorImg = BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB)
+    return Toolkit.getDefaultToolkit().createCustomCursor(
+        cursorImg,
+        Point(0, 0),
+        "invisible cursor"
+    )
+}
+
 fun parseLaunchArgs(args: Array<String>): AppConfig? {
     if (args.isEmpty()) {
         return AppConfig(mode = LaunchMode.NORMAL)
@@ -37,10 +55,6 @@ fun parseLaunchArgs(args: Array<String>): AppConfig? {
     val firstArg = args[0].lowercase()
     
     return when {
-        firstArg == "--help" || firstArg == "-h" -> {
-            showHelpMessage()
-            null // Exit after showing help
-        }
         firstArg == "/s" -> {
             // Screensaver mode
             AppConfig(
@@ -66,39 +80,45 @@ fun parseLaunchArgs(args: Array<String>): AppConfig? {
     }
 }
 
-fun showHelpMessage() {
-    val helpText = """
-        Landroid - Android 16 Baklava Easter Egg
-        Space exploration screensaver and game
-        
-        Usage:
-          Landroid.exe          - Launch in normal game mode
-          Landroid.exe /s       - Launch as screensaver (fullscreen)
-          Landroid.exe /c       - Show configuration dialog
-          Landroid.exe --help   - Show this help message
-        
-        Controls (Game Mode):
-          F11                   - Toggle fullscreen
-          ESC                   - Exit application
-          Mouse/Touch           - Control spacecraft
-          AUTO button           - Toggle autopilot
-        
-        Screensaver Mode:
-          - Starts in fullscreen with autopilot enabled
-          - Any mouse/keyboard input will exit
-    """.trimIndent()
-    
-    println(helpText)
-}
-
 fun showConfigDialog() {
+    val message = """
+Landroid - Android 16 Baklava Easter Egg
+Space exploration screensaver and game
+
+━【起動方法】━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+通常モード:
+Landroid.exe
+
+スクリーンセーバーモード:
+Landroid.exe /s
+
+設定ダイアログ（このウィンドウ）:
+Landroid.exe /c
+
+━【操作方法（通常モード）】━━━━━━━━━━━━━━━━━━━━━━━━
+
+F11キー … フルスクリーン切り替え
+ESCキー … 終了
+マウス/タッチ … 宇宙船を操作
+AUTOボタン … オートパイロット切り替え
+
+━【スクリーンセーバーモード】━━━━━━━━━━━━━━━━━━━━━━━
+
+• フルスクリーンで起動
+• オートパイロット有効
+• マウスポインタを非表示
+• マウス移動/キー入力で終了
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+このスクリーンセーバーに設定可能なオプションはありません。
+""".trimIndent()
+    
     JOptionPane.showMessageDialog(
         null,
-        "Landroid Screensaver\n\n" +
-        "This screensaver has no configurable options.\n\n" +
-        "For command-line options, run:\n" +
-        "  Landroid.exe --help",
-        "Landroid Configuration",
+        message,
+        "Landroid - 設定と使い方",
         JOptionPane.INFORMATION_MESSAGE
     )
 }
@@ -127,6 +147,15 @@ fun main(args: Array<String>) {
         
         // Track initial mouse position for screensaver mode
         val initialMousePos = remember { mutableStateOf<Offset?>(null) }
+        val isStabilized = remember { mutableStateOf(false) }
+        
+        // Use LaunchedEffect to set stabilization flag after delay
+        if (config.exitOnAnyInput && !isStabilized.value) {
+            LaunchedEffect(Unit) {
+                kotlinx.coroutines.delay(1500) // Wait 1.5 seconds
+                isStabilized.value = true
+            }
+        }
         
         // Create Universe once and preserve it across fullscreen toggles
         val universe = remember { 
@@ -149,6 +178,7 @@ fun main(args: Array<String>) {
         if (config.mode == LaunchMode.SCREENSAVER) {
             val graphicsEnvironment = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment()
             val screens = graphicsEnvironment.screenDevices
+            val invisibleCursor = remember { createInvisibleCursor() }
             
             // For each secondary screen, create a black window
             screens.forEachIndexed { index, screen ->
@@ -172,6 +202,12 @@ fun main(args: Array<String>) {
                             } else false
                         }
                     ) {
+                        // Set invisible cursor on the secondary window
+                        DisposableEffect(Unit) {
+                            window.cursor = invisibleCursor
+                            onDispose { }
+                        }
+                        
                         Box(
                             modifier = Modifier.fillMaxSize()
                                 .background(androidx.compose.ui.graphics.Color.Black)
@@ -230,21 +266,35 @@ fun main(args: Array<String>) {
                     }
                 }
             ) {
+            // Set invisible cursor for screensaver mode
+            if (config.mode == LaunchMode.SCREENSAVER) {
+                DisposableEffect(Unit) {
+                    val invisibleCursor = createInvisibleCursor()
+                    window.cursor = invisibleCursor
+                    onDispose { }
+                }
+            }
+            
             LandroidApp(
                 universe = universe,
                 config = config,
                 onMouseEvent = { mousePos ->
                     if (config.exitOnAnyInput) {
-                        // Initialize mouse position on first detection
-                        if (initialMousePos.value == null) {
+                        // Ignore mouse events until stabilization period is over
+                        if (!isStabilized.value) {
+                            // Keep updating the baseline position during stabilization
                             initialMousePos.value = mousePos
-                        } else {
-                            // Exit if mouse moved significantly (more than 5 pixels)
-                            val initial = initialMousePos.value!!
+                            return@LandroidApp
+                        }
+                        
+                        // After stabilization period, check for mouse movement
+                        val initial = initialMousePos.value
+                        if (initial != null) {
                             val dx = mousePos.x - initial.x
                             val dy = mousePos.y - initial.y
                             val distance = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
-                            if (distance > 5f) {
+                            // Exit if mouse moved significantly (more than 15 pixels)
+                            if (distance > 15f) {
                                 exitApplication()
                             }
                         }
@@ -271,8 +321,13 @@ fun LandroidApp(
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent()
-                                event.changes.firstOrNull()?.let { change ->
+                                event.changes.forEach { change ->
+                                    // Detect any pointer event: move, press, release
                                     onMouseEvent(change.position)
+                                    // Consume the event if it's a press or release
+                                    if (change.pressed || change.previousPressed != change.pressed) {
+                                        change.consume()
+                                    }
                                 }
                             }
                         }
