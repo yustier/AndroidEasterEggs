@@ -74,6 +74,8 @@ include(
     ":eggs:AndroidNext",
     ":eggs:RocketLauncher",
 
+    ":desktop",
+
     ":script:compose-material-icons-generator",
     ":script:emoji-svg-xml-convertor",
 )
